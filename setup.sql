@@ -1,0 +1,11 @@
+CREATE DATABASE Musinsa_lowest default CHARACTER SET UTF8;
+
+use Musinsa_lowest;
+
+CREATE TABLE topTable(
+  goods_id INT UNSIGNED NOT NULL PRIMARY KEY,
+  title VARCHAR(256) NOT NULL,
+  img_src VARCHAR(256) NOT NULL,
+  brand VARCHAR(256) NOT NULL,
+  price INT UNSIGNED NOT NULL
+) CHARSET=utf8;
