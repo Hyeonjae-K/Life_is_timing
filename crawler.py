@@ -1,5 +1,29 @@
 from bs4 import BeautifulSoup
 import requests
+import pymysql
+
+with open('./info.txt', encoding='UTF-8') as f:
+    host = f.readline().strip()
+    user = f.readline().strip()
+    password = f.readline().strip()
+    db_name = f.readline().strip()
+    charset = f.readline().strip()
+
+
+class Database():
+    def __init__(self):
+        self.db = pymysql.connect(host=host,
+                                  user=user,
+                                  password=password,
+                                  db=db_name,
+                                  charset=charset)
+        self.cursor = self.db.cursor(pymysql.cursors.DictCursor)
+
+    def execute(self, query, args={}):
+        self.cursor.execute(query, args)
+
+    def commit(self):
+        self.db.commit()
 
 
 def get_last_page_num(url, last_page_css):
@@ -25,7 +49,14 @@ def get_price(price):
     if 'del' in str(price):
         price.find().decompose()
 
-    return ''.join([x for x in price if x.isdigit()])
+    return ''.join([x for x in str(price) if x.isdigit()])
+
+
+def get_title(title):
+    if '%' in title:
+        title = title.replace('%', '%%')
+
+    return title
 
 
 def get_data(page_url):
@@ -42,7 +73,7 @@ def get_data(page_url):
         page_info = {}
 
         goods_id = get_goods_id(infos[i]['href'])
-        title = infos[i]['title']
+        title = get_title(infos[i]['title'])
         img_src = get_img_src(infos[i].find()['data-original'])
         brand = brands[i].text
         price = get_price(prices[i])
@@ -65,9 +96,18 @@ def crawl_top():
 
     for page_num in range(1, last_page_num + 1):
         data = get_data(url % page_num)
+        db = Database()
 
         for info in data:
-            print(info)
+            sql = "INSERT INTO topTable " \
+                  "VALUES('%s', '%s', '%s', '%s', '%s')" \
+                  % (info['goods_id'], info['title'], info['img_src'], info['brand'], info['price'])
+            try:
+                db.execute(sql)
+            except:
+                print(info)
+
+        db.commit()
 
 
 crawl_top()
